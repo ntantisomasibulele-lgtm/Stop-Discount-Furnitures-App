@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STOP! Discount Furnishers — Floor Companion App</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #F8FAFC;
+      color: #1E293B;
+    }
+
+    /* Custom CSS Keyframe Animation named 'pulse-red' for smooth pulsing red shadow glow */
+    @keyframes pulse-red {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.75), 0 0 20px 4px rgba(239, 68, 68, 0.45);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 22px rgba(239, 68, 68, 0), 0 0 32px 10px rgba(239, 68, 68, 0.65);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 20px 4px rgba(239, 68, 68, 0.45);
+      }
+    }
+
+    /* Active recording class triggered on microphone click */
+    .recording-active {
+      background-color: #ef4444 !important;
+      animation: pulse-red 1.2s infinite ease-in-out !important;
+    }
+
+    /* Flashing status text animation */
+    @keyframes flash-text {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .flashing-recording-text {
+      color: #ef4444 !important;
+      animation: flash-text 0.8s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased pb-16">
+
+  <!-- TOAST POPUP NOTIFICATION (Starts hidden with opacity-0, fades in to opacity-100 for 3s) -->
+  <div id="toastNotification"
+       role="status"
+       aria-live="polite"
+       class="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-lg pointer-events-none opacity-0 transition-opacity duration-300 ease-in-out">
+    <div class="bg-slate-900 text-white border-l-4 border-amber-500 rounded-xl shadow-2xl px-5 py-4 flex items-center gap-3.5">
+      <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+        ✓
+      </div>
+      <div>
+        <p class="text-sm sm:text-base font-semibold leading-snug">
+          Data exported successfully! Ready to import into your central system.
+        </p>
+        <p class="text-xs text-amber-400 font-medium mt-0.5">
+          Downloaded: Discount_Furnishers_Floor_Log.csv
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. BRANDED HEADER (With Offline Status Badge) -->
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-3xl mx-auto px-4 pt-5 pb-6 sm:px-6">
+      <div class="flex items-center justify-end mb-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-900 border border-amber-200">
+          South Africa Retail Edition
+        </span>
+      </div>
+
+      <!-- Brand Logo (STOP! Discount Furnishers) + Title, Subtitle & Offline Status Badge -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5">
+        <div class="flex-shrink-0 flex items-center justify-center sm:justify-start">
+          <svg viewBox="0 0 350 130" class="w-64 sm:w-72 h-auto" role="img" aria-label="STOP! Discount Furnishers Logo">
+            <rect x="95" y="25" width="245" height="80" rx="28" ry="28" fill="#F4C438" stroke="#DA2528" stroke-width="5" />
+            <text x="142" y="61" fill="#0F172A" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-style="italic" font-size="28">Discount</text>
+            <text x="142" y="92" fill="#0F172A" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-style="italic" font-size="28">Furnishers</text>
+            <polygon points="41,7 89,7 123,41 123,89 89,123 41,123 7,89 7,41" fill="#DA2528" />
+            <polygon points="44,14 86,14 116,44 116,86 86,116 44,116 14,86 14,44" fill="none" stroke="#FFFFFF" stroke-width="3.2" />
+            <text x="65" y="79" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', Impact, sans-serif" font-weight="800" font-size="34" textLength="86" lengthAdjust="spacingAndGlyphs">STOP!</text>
+          </svg>
+        </div>
+
+        <div class="border-t sm:border-t-0 sm:border-l border-slate-200 pt-3.5 sm:pt-0 sm:pl-5 text-center sm:text-left">
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Floor Companion App
+          </h1>
+          <p class="mt-1 text-sm sm:text-base font-semibold text-amber-700">
+            Voice Stock &amp; Order Capture Engine
+          </p>
+          <!-- 1. OFFLINE STATUS BADGE -->
+          <p class="mt-1.5 text-xs font-medium text-slate-500 flex items-center justify-center sm:justify-start gap-1.5">
+            <span class="text-emerald-500">●</span>
+            <span>Local Engine Active (Zero Data Cost)</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <main class="max-w-3xl mx-auto px-4 sm:px-6 mt-6 space-y-6">
+
+    <!-- 2. LIVE TRANSACTIONAL RECORDING PANEL -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Step 1 • Field Audio Capture</span>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">Live Transactional Recording Panel</h2>
+        </div>
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
+          Voice-to-Document
+        </span>
+      </div>
+
+      <!-- Interactive Dropdown/Select Box -->
+      <div class="mb-6">
+        <label for="workflowSelect" class="block text-sm font-bold text-slate-700 mb-2">
+          Select Active Floor Workflow
+        </label>
+        <div class="relative">
+          <select id="workflowSelect"
+                  class="w-full appearance-none rounded-xl border border-slate-300 bg-slate-50 px-4 py-3.5 pr-10 text-sm sm:text-base font-semibold text-slate-800 focus:border-amber-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition cursor-pointer">
+            <option value="Showroom Stock Count">Showroom Stock Count</option>
+            <option value="Custom Order Capture">Custom Order Capture</option>
+            <option value="Delivery Inspection">Delivery Inspection</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. LOCAL ACCENT PROFILE SWITCH (Directly above the microphone button) -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <span class="text-xs font-semibold text-slate-600">
+          Accent Optimization Profile:
+        </span>
+        <div class="inline-flex items-center rounded-full bg-slate-100 p-1 border border-slate-200" role="group" aria-label="Accent Optimization Profile">
+          <button id="accentSaEnglishBtn"
+                  type="button"
+                  class="px-3.5 py-1 rounded-full text-xs font-bold transition cursor-pointer bg-amber-50 text-amber-900 border border-amber-500 shadow-2xs">
+            SA English
+          </button>
+          <button id="accentIsiXhosaBtn"
+                  type="button"
+                  class="px-3.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer text-slate-600 border border-transparent hover:text-slate-900">
+            isiXhosa
+          </button>
+        </div>
+      </div>
+
+      <!-- Large Circular Microphone Button & Status Label -->
+      <div class="flex flex-col items-center justify-center py-8 px-4 rounded-2xl bg-slate-50 border border-slate-200 mb-6">
+        <button id="micButton"
+                type="button"
+                aria-label="Record field audio"
+                class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-amber-500/40 cursor-pointer">
+          <svg class="w-11 h-11 sm:w-12 sm:h-12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 1a4 4 0 00-4 4v6a4 4 0 008 0V5a4 4 0 00-4-4z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-14 0M12 18v4m-4 0h8" />
+          </svg>
+        </button>
+
+        <p id="statusText" class="mt-4 text-sm sm:text-base font-bold text-slate-600 text-center">
+          Tap microphone to start 4-second field voice capture
+        </p>
+      </div>
+
+      <!-- Transcript Textarea + 3. QUICK COPY ACTION Button -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label for="transcriptInput" class="block text-sm font-bold text-slate-700">
+            Captured Voice-to-Document Transcript
+          </label>
+          <button id="quickCopyBtn"
+                  type="button"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200 hover:border-amber-300 transition cursor-pointer">
+            📋 Copy
+          </button>
+        </div>
+        <textarea id="transcriptInput"
+                  rows="4"
+                  placeholder="Click the microphone button above to record field audio..."
+                  class="w-full rounded-xl border border-slate-300 bg-white p-4 text-sm sm:text-base text-slate-800 leading-relaxed shadow-inner focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition"></textarea>
+      </div>
+    </section>
+
+    <!-- 3. ONE-CLICK EXPORT WORKFLOW -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+      <div class="mb-4">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Step 2 • Central System Sync</span>
+        <h2 class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">One-Click Export Workflow</h2>
+      </div>
+
+      <!-- Prominent Primary Action Button -->
+      <button id="exportButton"
+              type="button"
+              class="w-full py-4 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-bold text-base sm:text-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-3 cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+        </svg>
+        <span>Export Sheet to POS/Inventory</span>
+      </button>
+
+      <!-- Dynamic 3-Column Data Preview Table -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600">
+            POS / Inventory Data Preview Table
+          </h3>
+          <span id="entryBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+            0 Entries
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-white text-xs uppercase tracking-wider">
+                <th class="py-3.5 px-4 font-bold whitespace-nowrap w-1/4">Date/Time</th>
+                <th class="py-3.5 px-4 font-bold whitespace-nowrap w-1/4">Workflow Type</th>
+                <th class="py-3.5 px-4 font-bold">Logged Details</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody" class="divide-y divide-slate-200 text-sm bg-white">
+              <tr id="emptyRow">
+                <td colspan="3" class="py-8 px-4 text-center text-slate-500 italic">
+                  No entries exported yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- COMPLETE INTERACTIVE JAVASCRIPT -->
+  <script>
+    const micButton = document.getElementById('micButton');
+    const statusText = document.getElementById('statusText');
+    const transcriptInput = document.getElementById('transcriptInput');
+    const workflowSelect = document.getElementById('workflowSelect');
+    const exportButton = document.getElementById('exportButton');
+    const tableBody = document.getElementById('tableBody');
+    const entryBadge = document.getElementById('entryBadge');
+    const toastNotification = document.getElementById('toastNotification');
+    const accentSaEnglishBtn = document.getElementById('accentSaEnglishBtn');
+    const accentIsiXhosaBtn = document.getElementById('accentIsiXhosaBtn');
+    const quickCopyBtn = document.getElementById('quickCopyBtn');
+
+    const TRANSCRIPT_SA_ENGLISH =
+      "Stock check complete for showroom floor. Two luxury leather couches checked in. One minor scratch reported on the left armrest of the unit. Camagu.";
+
+    const TRANSCRIPT_ISIXHOSA =
+      "I-odolo entsha yesofa. Custom 3-seater corner couch requested in dark gray suede fabric. Umthengi ubhatale idipozithi. Camagu.";
+
+    let activeAccentProfile = 'SA English';
+    let isRecording = false;
+    let exportCount = 0;
+    let toastTimer = null;
+    let copyButtonTimer = null;
+    const exportedRecords = [];
+
+    // 2. LOCAL ACCENT PROFILE SWITCH LOGIC
+    function setAccentProfile(profile) {
+      activeAccentProfile = profile;
+      if (profile === 'SA English') {
+        accentSaEnglishBtn.className =
+          'px-3.5 py-1 rounded-full text-xs font-bold transition cursor-pointer bg-amber-50 text-amber-900 border border-amber-500 shadow-2xs';
+        accentIsiXhosaBtn.className =
+          'px-3.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer text-slate-600 border border-transparent hover:text-slate-900';
+      } else {
+        accentIsiXhosaBtn.className =
+          'px-3.5 py-1 rounded-full text-xs font-bold transition cursor-pointer bg-amber-50 text-amber-900 border border-amber-500 shadow-2xs';
+        accentSaEnglishBtn.className =
+          'px-3.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer text-slate-600 border border-transparent hover:text-slate-900';
+      }
+    }
+
+    accentSaEnglishBtn.addEventListener('click', function () {
+      setAccentProfile('SA English');
+    });
+
+    accentIsiXhosaBtn.addEventListener('click', function () {
+      setAccentProfile('isiXhosa');
+    });
+
+    function getActiveSimulatedTranscript() {
+      return activeAccentProfile === 'isiXhosa'
+        ? TRANSCRIPT_ISIXHOSA
+        : TRANSCRIPT_SA_ENGLISH;
+    }
+
+    // 3. QUICK COPY ACTION LOGIC
+    quickCopyBtn.addEventListener('click', function () {
+      const textToCopy = transcriptInput.value;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).catch(function () {
+          transcriptInput.select();
+          document.execCommand('copy');
+        });
+      } else {
+        transcriptInput.select();
+        document.execCommand('copy');
+      }
+
+      quickCopyBtn.textContent = 'Copied! ✓';
+      quickCopyBtn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+
+      if (copyButtonTimer) {
+        clearTimeout(copyButtonTimer);
+      }
+      copyButtonTimer = setTimeout(function () {
+        quickCopyBtn.textContent = '📋 Copy';
+        quickCopyBtn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+      }, 2000);
+    });
+
+    // Helper: Escape double quotes and wrap in quotation marks for Microsoft Excel
+    function toCsvField(value) {
+      const safe = String(value).replace(/"/g, '""');
+      return '"' + safe + '"';
+    }
+
+    // Helper: Automatically generate and download "Discount_Furnishers_Floor_Log.csv"
+    function triggerCsvAutoDownload(records) {
+      const header = 'Date/Time,Workflow Type,Logged Details\r\n';
+      const rows = records.map(function (item) {
+        return (
+          toCsvField(item.dateTime) +
+          ',' +
+          toCsvField(item.workflowType) +
+          ',' +
+          toCsvField(item.loggedDetails)
+        );
+      });
+
+      const csvContent = '\uFEFF' + header + rows.join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const downloadLink = document.createElement('a');
+      downloadLink.href = downloadUrl;
+      downloadLink.setAttribute('download', 'Discount_Furnishers_Floor_Log.csv');
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      setTimeout(function () {
+        URL.revokeObjectURL(downloadUrl);
+      }, 1000);
+    }
+
+    // 1. RECORDING STATE ANIMATION (4-Second Simulated Audio Capture)
+    micButton.addEventListener('click', function () {
+      if (isRecording) return;
+      isRecording = true;
+
+      // Turn button red (#ef4444) and trigger 'pulse-red' keyframe animation
+      micButton.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+      micButton.classList.add('recording-active');
+
+      // Show flashing "Recording field audio..." status text
+      statusText.textContent = 'Recording field audio...';
+      statusText.classList.add('flashing-recording-text');
+
+      // Run for exactly 4 seconds (4000ms)
+      setTimeout(function () {
+        isRecording = false;
+
+        // Remove recording/pulsing styles and revert button back to amber
+        micButton.classList.remove('recording-active');
+        micButton.classList.add('bg-amber-600', 'hover:bg-amber-700');
+
+        // Restore status text and insert transcript based on active Accent Optimization Profile
+        statusText.classList.remove('flashing-recording-text');
+        statusText.textContent = 'Audio capture complete — ready to export.';
+        transcriptInput.value = getActiveSimulatedTranscript();
+      }, 4000);
+    });
+
+    // COMBINED EXPORT, DYNAMIC TABLE UPDATE & AUTOMATIC CSV DOWNLOAD
+    exportButton.addEventListener('click', function () {
+      let detailsText = transcriptInput.value.trim();
+
+      if (!detailsText) {
+        detailsText = getActiveSimulatedTranscript();
+        transcriptInput.value = detailsText;
+      }
+
+      // Remove the static "No entries exported yet" table row if it exists
+      const emptyRow = document.getElementById('emptyRow');
+      if (emptyRow) {
+        emptyRow.remove();
+      }
+
+      // Pull current system Date/Time, selected workflow string, and transcript text
+      const now = new Date();
+      const dateTimeString = now.toLocaleString('en-ZA', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      const selectedWorkflow = workflowSelect.value;
+
+      // Action 1: Instantly display the newly exported row in the POS / Inventory Data Preview Table
+      const newRow = document.createElement('tr');
+      newRow.className = 'hover:bg-amber-50/40 transition-colors';
+
+      const dateCell = document.createElement('td');
+      dateCell.className = 'py-3.5 px-4 font-mono text-xs text-slate-600 whitespace-nowrap align-top';
+      dateCell.textContent = dateTimeString;
+
+      const workflowCell = document.createElement('td');
+      workflowCell.className = 'py-3.5 px-4 align-top';
+      const workflowBadge = document.createElement('span');
+      workflowBadge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap';
+      workflowBadge.textContent = selectedWorkflow;
+      workflowCell.appendChild(workflowBadge);
+
+      const detailsCell = document.createElement('td');
+      detailsCell.className = 'py-3.5 px-4 text-slate-800 leading-relaxed align-top';
+      detailsCell.textContent = detailsText;
+
+      newRow.appendChild(dateCell);
+      newRow.appendChild(workflowCell);
+      newRow.appendChild(detailsCell);
+
+      tableBody.prepend(newRow);
+
+      // Update entry counter badge ("1 Entry", "2 Entries", etc.)
+      exportCount += 1;
+      entryBadge.textContent = exportCount === 1 ? '1 Entry' : exportCount + ' Entries';
+
+      // Action 2: Automatically generate & download "Discount_Furnishers_Floor_Log.csv"
+      exportedRecords.unshift({
+        dateTime: dateTimeString,
+        workflowType: selectedWorkflow,
+        loggedDetails: detailsText
+      });
+      triggerCsvAutoDownload(exportedRecords);
+
+      // Fade in the top toast notification (opacity-0 -> opacity-100) for 3 seconds, then fade out
+      toastNotification.classList.remove('opacity-0');
+      toastNotification.classList.add('opacity-100');
+
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+      }
+      toastTimer = setTimeout(function () {
+        toastNotification.classList.remove('opacity-100');
+        toastNotification.classList.add('opacity-0');
+      }, 3000);
+    });
+  </script>
+</body>
+</html>
