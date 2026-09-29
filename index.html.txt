@@ -170,31 +170,31 @@
           </svg>
         </button>
 
-        <p id="statusText" class="mt-4 text-sm sm:text-base font-bold text-slate-600 text-center">
+        <p id="micStatus" class="mt-4 text-sm sm:text-base font-bold text-slate-600 text-center">
           Tap microphone to start 4-second field voice capture
         </p>
       </div>
 
-      <!-- Transcript Textarea with Quick Copy & Clear Buttons -->
+      <!-- Transcript Textarea with Quick Copy & Clear Text Buttons -->
       <div>
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <label for="transcriptInput" class="block text-sm font-bold text-slate-700">
+          <label for="transcriptArea" class="block text-sm font-bold text-slate-700">
             Captured Voice-to-Document Transcript
           </label>
           <div class="flex items-center gap-2">
-            <button id="quickCopyBtn"
+            <button id="copyBtn"
                     type="button"
                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200 hover:border-amber-300 transition cursor-pointer">
               📋 Copy
             </button>
-            <button id="clearTextBtn"
+            <button id="clearBtn"
                     type="button"
                     class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 border border-slate-200 hover:border-red-200 transition cursor-pointer">
-              Clear
+              Clear Text
             </button>
           </div>
         </div>
-        <textarea id="transcriptInput"
+        <textarea id="transcriptArea"
                   rows="4"
                   placeholder="Click the microphone button above to record field audio..."
                   class="w-full rounded-xl border border-slate-300 bg-white p-4 text-sm sm:text-base text-slate-800 leading-relaxed shadow-inner focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition"></textarea>
@@ -208,7 +208,7 @@
         <h2 class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">One-Click Export Workflow</h2>
       </div>
 
-      <button id="exportButton"
+      <button id="exportBtn"
               type="button"
               class="w-full py-4 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-bold text-base sm:text-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-3 cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
@@ -253,17 +253,17 @@
   <!-- FULL INTERACTIVE JAVASCRIPT LOGIC -->
   <script>
     const micButton = document.getElementById('micButton');
-    const statusText = document.getElementById('statusText');
-    const transcriptInput = document.getElementById('transcriptInput');
+    const micStatus = document.getElementById('micStatus');
+    const transcriptArea = document.getElementById('transcriptArea');
     const workflowSelect = document.getElementById('workflowSelect');
-    const exportButton = document.getElementById('exportButton');
+    const exportBtn = document.getElementById('exportBtn');
     const tableBody = document.getElementById('tableBody');
     const entryBadge = document.getElementById('entryBadge');
     const toastNotification = document.getElementById('toastNotification');
     const accentSaEnglishBtn = document.getElementById('accentSaEnglishBtn');
     const accentIsiXhosaBtn = document.getElementById('accentIsiXhosaBtn');
-    const quickCopyBtn = document.getElementById('quickCopyBtn');
-    const clearTextBtn = document.getElementById('clearTextBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
 
     const TRANSCRIPT_SA_ENGLISH =
       "Stock check complete for showroom floor. Two luxury leather couches checked in. One minor scratch reported on the left armrest of the unit. Camagu.";
@@ -275,23 +275,22 @@
     let isRecording = false;
     let exportCount = 0;
     let toastTimer = null;
-    let copyButtonTimer = null;
+    let copyBtnTimer = null;
     const exportedRecords = [];
 
-    // Accent Optimization Profile Toggle Logic
     function setAccentProfile(profile) {
       activeAccentProfile = profile;
-      const activeClasses =
+      const activeClass =
         'px-3.5 py-1 rounded-full text-xs font-bold transition cursor-pointer bg-amber-50 text-amber-900 border border-amber-500 shadow-2xs';
-      const inactiveClasses =
+      const inactiveClass =
         'px-3.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer text-slate-600 border border-transparent hover:text-slate-900';
 
       if (profile === 'SA English') {
-        accentSaEnglishBtn.className = activeClasses;
-        accentIsiXhosaBtn.className = inactiveClasses;
+        accentSaEnglishBtn.className = activeClass;
+        accentIsiXhosaBtn.className = inactiveClass;
       } else {
-        accentIsiXhosaBtn.className = activeClasses;
-        accentSaEnglishBtn.className = inactiveClasses;
+        accentIsiXhosaBtn.className = activeClass;
+        accentSaEnglishBtn.className = inactiveClass;
       }
     }
 
@@ -303,79 +302,12 @@
       setAccentProfile('isiXhosa');
     });
 
-    function getActiveSimulatedTranscript() {
+    function getActiveTranscript() {
       return activeAccentProfile === 'isiXhosa'
         ? TRANSCRIPT_ISIXHOSA
         : TRANSCRIPT_SA_ENGLISH;
     }
 
-    // Clipboard Copy Button Logic
-    quickCopyBtn.addEventListener('click', function () {
-      const textToCopy = transcriptInput.value;
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(textToCopy).catch(function () {
-          transcriptInput.select();
-          document.execCommand('copy');
-        });
-      } else {
-        transcriptInput.select();
-        document.execCommand('copy');
-      }
-
-      quickCopyBtn.textContent = 'Copied! ✓';
-      quickCopyBtn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
-
-      if (copyButtonTimer) {
-        clearTimeout(copyButtonTimer);
-      }
-      copyButtonTimer = setTimeout(function () {
-        quickCopyBtn.textContent = '📋 Copy';
-        quickCopyBtn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
-      }, 2000);
-    });
-
-    // Clear Textarea Button Logic
-    clearTextBtn.addEventListener('click', function () {
-      transcriptInput.value = '';
-      statusText.classList.remove('flashing-recording-text');
-      statusText.textContent = 'Tap microphone to start 4-second field voice capture';
-    });
-
-    // Excel-Compatible CSV Formatter & Auto-Downloader
-    function toCsvField(value) {
-      return '"' + String(value).replace(/"/g, '""') + '"';
-    }
-
-    function triggerCsvAutoDownload(records) {
-      const header = 'Date/Time,Workflow Type,Logged Details\r\n';
-      const rows = records.map(function (item) {
-        return (
-          toCsvField(item.dateTime) +
-          ',' +
-          toCsvField(item.workflowType) +
-          ',' +
-          toCsvField(item.loggedDetails)
-        );
-      });
-
-      const csvContent = '\uFEFF' + header + rows.join('\r\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const downloadUrl = URL.createObjectURL(blob);
-
-      const downloadLink = document.createElement('a');
-      downloadLink.href = downloadUrl;
-      downloadLink.setAttribute('download', 'Discount_Furnishers_Floor_Log.csv');
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-
-      setTimeout(function () {
-        URL.revokeObjectURL(downloadUrl);
-      }, 1000);
-    }
-
-    // 4-Second Microphone Simulation Timer
     micButton.addEventListener('click', function () {
       if (isRecording) return;
       isRecording = true;
@@ -383,37 +315,86 @@
       micButton.classList.remove('bg-amber-600', 'hover:bg-amber-700');
       micButton.classList.add('recording-active');
 
-      statusText.textContent = 'Recording field audio...';
-      statusText.classList.add('flashing-recording-text');
+      micStatus.textContent = 'Recording field audio...';
+      micStatus.classList.add('flashing-recording-text');
 
       setTimeout(function () {
         isRecording = false;
-
         micButton.classList.remove('recording-active');
         micButton.classList.add('bg-amber-600', 'hover:bg-amber-700');
 
-        statusText.classList.remove('flashing-recording-text');
-        statusText.textContent = 'Audio capture complete — ready to export.';
-        transcriptInput.value = getActiveSimulatedTranscript();
+        micStatus.classList.remove('flashing-recording-text');
+        micStatus.textContent = 'Audio capture complete — ready to export.';
+        transcriptArea.value = getActiveTranscript();
       }, 4000);
     });
 
-    // Export Button: Prepend Table Row + Increment Counter + Toast Alert + Download CSV
-    exportButton.addEventListener('click', function () {
-      let detailsText = transcriptInput.value.trim();
+    copyBtn.addEventListener('click', function () {
+      const textToCopy = transcriptArea.value;
 
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).catch(function () {
+          transcriptArea.select();
+          document.execCommand('copy');
+        });
+      } else {
+        transcriptArea.select();
+        document.execCommand('copy');
+      }
+
+      copyBtn.textContent = 'Copied! ✓';
+      copyBtn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+
+      if (copyBtnTimer) clearTimeout(copyBtnTimer);
+      copyBtnTimer = setTimeout(function () {
+        copyBtn.textContent = '📋 Copy';
+        copyBtn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+      }, 2000);
+    });
+
+    clearBtn.addEventListener('click', function () {
+      transcriptArea.value = '';
+      micStatus.classList.remove('flashing-recording-text');
+      micStatus.textContent = 'Tap microphone to start 4-second field voice capture';
+    });
+
+    function toCsvCell(val) {
+      return '"' + String(val).replace(/"/g, '""') + '"';
+    }
+
+    function downloadCsvFile(records) {
+      const header = 'Date/Time,Workflow Type,Logged Details\r\n';
+      const rows = records.map(function (r) {
+        return toCsvCell(r.dateTime) + ',' + toCsvCell(r.workflow) + ',' + toCsvCell(r.details);
+      });
+
+      const csvBlob = new Blob(['\uFEFF' + header + rows.join('\r\n')], {
+        type: 'text/csv;charset=utf-8;'
+      });
+      const url = URL.createObjectURL(csvBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('download', 'Discount_Furnishers_Floor_Log.csv');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    }
+
+    exportBtn.addEventListener('click', function () {
+      let detailsText = transcriptArea.value.trim();
       if (!detailsText) {
-        detailsText = getActiveSimulatedTranscript();
-        transcriptInput.value = detailsText;
+        detailsText = getActiveTranscript();
+        transcriptArea.value = detailsText;
       }
 
       const emptyRow = document.getElementById('emptyRow');
-      if (emptyRow) {
-        emptyRow.remove();
-      }
+      if (emptyRow) emptyRow.remove();
 
-      const now = new Date();
-      const dateTimeString = now.toLocaleString('en-ZA', {
+      const dateTimeString = new Date().toLocaleString('en-ZA', {
         year: 'numeric',
         month: 'short',
         day: '2-digit',
@@ -424,46 +405,44 @@
       });
       const selectedWorkflow = workflowSelect.value;
 
-      const newRow = document.createElement('tr');
-      newRow.className = 'hover:bg-amber-50/40 transition-colors';
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-amber-50/40 transition-colors';
 
-      const dateCell = document.createElement('td');
-      dateCell.className = 'py-3.5 px-4 font-mono text-xs text-slate-600 whitespace-nowrap align-top';
-      dateCell.textContent = dateTimeString;
+      const tdDate = document.createElement('td');
+      tdDate.className = 'py-3.5 px-4 font-mono text-xs text-slate-600 whitespace-nowrap align-top';
+      tdDate.textContent = dateTimeString;
 
-      const workflowCell = document.createElement('td');
-      workflowCell.className = 'py-3.5 px-4 align-top';
-      const workflowBadge = document.createElement('span');
-      workflowBadge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap';
-      workflowBadge.textContent = selectedWorkflow;
-      workflowCell.appendChild(workflowBadge);
+      const tdWorkflow = document.createElement('td');
+      tdWorkflow.className = 'py-3.5 px-4 align-top';
+      const spanBadge = document.createElement('span');
+      spanBadge.className =
+        'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap';
+      spanBadge.textContent = selectedWorkflow;
+      tdWorkflow.appendChild(spanBadge);
 
-      const detailsCell = document.createElement('td');
-      detailsCell.className = 'py-3.5 px-4 text-slate-800 leading-relaxed align-top';
-      detailsCell.textContent = detailsText;
+      const tdDetails = document.createElement('td');
+      tdDetails.className = 'py-3.5 px-4 text-slate-800 leading-relaxed align-top';
+      tdDetails.textContent = detailsText;
 
-      newRow.appendChild(dateCell);
-      newRow.appendChild(workflowCell);
-      newRow.appendChild(detailsCell);
-
-      tableBody.prepend(newRow);
+      tr.appendChild(tdDate);
+      tr.appendChild(tdWorkflow);
+      tr.appendChild(tdDetails);
+      tableBody.prepend(tr);
 
       exportCount += 1;
       entryBadge.textContent = exportCount === 1 ? '1 Entry' : exportCount + ' Entries';
 
       exportedRecords.unshift({
         dateTime: dateTimeString,
-        workflowType: selectedWorkflow,
-        loggedDetails: detailsText
+        workflow: selectedWorkflow,
+        details: detailsText
       });
-      triggerCsvAutoDownload(exportedRecords);
+      downloadCsvFile(exportedRecords);
 
       toastNotification.classList.remove('opacity-0');
       toastNotification.classList.add('opacity-100');
 
-      if (toastTimer) {
-        clearTimeout(toastTimer);
-      }
+      if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(function () {
         toastNotification.classList.remove('opacity-100');
         toastNotification.classList.add('opacity-0');
